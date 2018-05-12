@@ -1,0 +1,48 @@
+# start with an empty folder
+
+# let's build the dynamic content site using .net core:
+mkdir dynamic-content
+cd dynamic-content
+dotnet new mvc --name DynamicContent --output . --framework netcoreapp2.0
+# create Dockerfile -- the standard multi-part build for .net core
+docker build -t dynamic-content .
+docker run -d -p 5000:5000 --name dynamic-content dynamic-content
+# show that dynamic site works:
+#open browser to http://localhost:5000/
+cd ..
+
+# let's build the reverse proxy using nginx:
+mkdir reverse-proxy
+cd reverse-proxy
+# create nginx.conf
+# create Dockerfile
+docker build -t reverse-proxy:1.0 .
+docker run -d -p 8080:80 --name reverse-proxy --link dynamic-content reverse-proxy:1.0
+# reverse proxy works:
+#open browser to http://localhost:8080/
+cd ..
+
+# most people stop here
+# both static and dynamic content are served from one web server
+# that's totally fine
+
+# do you want to serve static content from a web server optimized for static content?
+mkdir static-content
+cd static-content
+# copy dynamic-content/wwwroot/* into this folder
+# change something to make it obvious -- like /images/banner1.svg
+docker build -t static-content .
+docker run -d -p 3000:80 --name static-content static-content
+cd ..
+
+# now change reverse proxy to direct content to either container:
+cd reverse-proxy
+# modify nginx.conf
+docker container stop reverse-proxy
+docker container rm reverse-proxy
+docker build -t reverse-proxy:2.0 .
+docker run -d -p 8080:80 --name reverse-proxy --link dynamic-content --link static-content reverse-proxy:2.0
+cd ..
+
+# now it works:
+#open browser to http://localhost:8080/

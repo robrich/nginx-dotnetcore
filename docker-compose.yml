@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  reverse-proxy:
+    build: reverse-proxy
+    ports:
+      - 8080:80
+    depends_on:
+      - dynamic-content
+      - static-content
+
+  dynamic-content:
+    build: dynamic-content
+    # expose port for debugging
+    ports:
+      - 5000:5000
+  
+  static-content:
+    build: static-content
+    # expose port for debugging
+    ports:
+      - 3000:80
